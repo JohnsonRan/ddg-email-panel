@@ -36,9 +36,6 @@ yarn-error.log*
 next-env.d.ts
 pages/api/test.ts
 
-# next-pwa
-**/public/workbox-*.js
-**/public/sw.js
-**/public/workbox-*.js.map
-**/public/sw.js.map
-**/public/fallback-*.js
+# local agent artifacts
+/.qa/
+/.pi/

@@ -19,15 +19,21 @@
 * Supports all modern browsers
 * PWA
 * Generate new privacy aliases
+* **Alias vault** — every generated alias is kept locally with notes, tags and search, plus JSON export/import for backups
+* **Multi-account support** — add several `@duck.com` accounts and switch between them
+* **Account overview** — join date, cohort, generated address count and forwarding address
+* **Reverse alias helper** — turn a recipient address into a DuckDuckGo reverse alias so you can start a conversation from your Duck address
 * No user information is stored on the server side
-* Multi-language support
+* Multi-language support (English, 简体中文, 日本語)
 * Night Mode
 
 ## 📒 Todo
-* Multi-account management
-* History alias management, notes
 * Change forwarding address
 * DuckDuckGo Email account cancellation
+* Server-side alias list or deletion — not possible, DuckDuckGo's API only exposes login, dashboard and address generation
+
+## 🔐 Where your data lives
+Accounts, aliases, notes and tags are stored **only in your browser's `localStorage`** — the panel's server never persists them. The only outbound calls are to DuckDuckGo's own API. Clearing your browser data removes the vault, so use **Export** on the Vault page first.
 
 ## 🌏 Our hosted
 * [DDG Email Panel](http://ddgep.whatk.me/)
@@ -45,7 +51,8 @@ docker run -d --restart=always -p 3000:3000 --name ddg-email-panel whatk233/ddg-
 ## 🔧 Local Deployment
 
 ### Environment
-* Node.js 16 or newer
+* Node.js 20.9 or newer (Node.js 24 recommended — the Docker image uses it)
+* pnpm is what this repo is developed with; npm and yarn work too
 
 ```bash
 git clone https://github.com/whatk233/ddg-email-panel.git
@@ -67,6 +74,11 @@ npm run build
 npm run start
 
 ```
+
+### Stack
+Next.js 16 (pages router) · React 19 · Tailwind CSS 4 · jotai · next-i18next · TypeScript 6
+
+> TypeScript is intentionally pinned to 6.x: the current `typescript-eslint` release does not yet accept TypeScript 7.
 
 ## ❤️ Donate
 <a href='https://ko-fi.com/whatk' target='_blank'>Buy Me a Coffee</a> · <a href='https://afdian.net/@whatk' target='_blank'>爱发电</a>

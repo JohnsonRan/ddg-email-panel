@@ -1,23 +1,27 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
-/** @type {import('next').NextConfig} */
 const { i18n } = require('./next-i18next.config')
-const withPWA = require('next-pwa')({
-  dest: 'public',
-  disable: process.env.NODE_ENV === 'development',
-})
 const getGitCommitInfo = require('./utils/getGitCommitInfo')
 
-module.exports = async () => {
-  const nextConfig = getGitCommitInfo(
-    withPWA({
-      experimental: {
-        newNextLinkBehavior: true,
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  i18n,
+  reactStrictMode: true,
+  output: 'standalone',
+  poweredByHeader: false,
+  // Next.js otherwise writes an AGENTS.md into the repo root on every `next dev`.
+  agentRules: false,
+  async headers() {
+    return [
+      {
+        // The service worker must never be served stale, and must be allowed
+        // to control the whole origin.
+        source: '/sw.js',
+        headers: [
+          { key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' },
+          { key: 'Service-Worker-Allowed', value: '/' },
+        ],
       },
-      i18n,
-      reactStrictMode: true,
-      swcMinify: true,
-      output: 'standalone',
-    })
-  )
-  return nextConfig
+    ]
+  },
 }
+
+module.exports = async () => getGitCommitInfo(nextConfig)

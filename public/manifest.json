@@ -1,27 +1,36 @@
 {
+  "id": "ddg-email-panel",
   "name": "DDG Email Panel",
   "short_name": "DDG Email Panel",
-  "display_override": ["window-controls-overlay"],
+  "description": "Open source unofficial DuckDuckGo Email Protection panel.",
+  "lang": "en",
+  "dir": "ltr",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "display": "standalone",
+  "orientation": "any",
+  "categories": ["productivity", "utilities"],
   "icons": [
     {
       "src": "/icons/192x192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "/icons/384x384.png",
       "sizes": "384x384",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "/icons/512x512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     }
   ],
-  "theme_color": "#FFFFFF",
-  "background_color": "#FFFFFF",
+  "theme_color": "#0ea5e9",
+  "background_color": "#020617",
   "start_url": "/",
-  "display": "standalone",
-  "orientation": "portrait"
+  "scope": "/"
 }

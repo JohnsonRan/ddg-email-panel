@@ -1,64 +1,37 @@
+import type { DashboardResponse } from '../types'
 import { DUCKDUCKGO_API_ENDPOINT, DUCKDUCKGO_API_USERAGENT } from './constants'
 
 const endpoint = DUCKDUCKGO_API_ENDPOINT
-const fetchInit = { headers: { 'User-Agent': DUCKDUCKGO_API_USERAGENT } }
+const baseHeaders = { 'User-Agent': DUCKDUCKGO_API_USERAGENT }
+
+export type { DashboardResponse }
 
 export async function loginRequest(username: string) {
-  return new Promise<Response>(function (resolve, reject) {
-    fetch(`${endpoint}/auth/loginlink?user=${username}`, fetchInit)
-      .then((response) => {
-        resolve(response)
-      })
-      .catch((err) => {
-        reject(err)
-      })
+  return fetch(`${endpoint}/auth/loginlink?user=${encodeURIComponent(username)}`, {
+    headers: baseHeaders,
   })
 }
 
 export async function login(username: string, otp: string) {
-  otp = otp.trim().replace(/\s/g, '+')
-  return new Promise<Response>(function (resolve, reject) {
-    fetch(`${endpoint}/auth/login?otp=${otp}&user=${username}`, fetchInit)
-      .then((result) => {
-        resolve(result)
-      })
-      .catch((err) => {
-        reject(err)
-      })
+  // DuckDuckGo expects the passphrase's spaces as `+` in the query string.
+  const passphrase = otp.trim().replace(/\s/g, '+')
+  return fetch(`${endpoint}/auth/login?otp=${passphrase}&user=${encodeURIComponent(username)}`, {
+    headers: baseHeaders,
   })
 }
 
-export async function getAccessToken(token: string) {
-  return new Promise<Response>(function (resolve, reject) {
-    fetch(`${endpoint}/email/dashboard`, {
-      ...fetchInit,
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-      .then((result) => {
-        resolve(result)
-      })
-      .catch((err) => {
-        reject(err)
-      })
+export async function getDashboard(token: string) {
+  return fetch(`${endpoint}/email/dashboard`, {
+    headers: { ...baseHeaders, Authorization: `Bearer ${token}` },
   })
 }
+
+/** Kept for the token login flow: the dashboard is the access-token check. */
+export const getAccessToken = getDashboard
 
 export async function generateAddresses(token: string) {
-  return new Promise<Response>(function (resolve, reject) {
-    fetch(`${endpoint}/email/addresses`, {
-      ...fetchInit,
-      method: 'post',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-      .then((result) => {
-        resolve(result)
-      })
-      .catch((err) => {
-        reject(err)
-      })
+  return fetch(`${endpoint}/email/addresses`, {
+    method: 'POST',
+    headers: { ...baseHeaders, Authorization: `Bearer ${token}` },
   })
 }
