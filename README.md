@@ -44,9 +44,18 @@ Accounts, aliases, notes and tags are stored **only in your browser's `localStor
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fwhatk233%2Fddg-email-panel&demo-title=DDG%20Email%20Panel&demo-description=DDG%20Email%20Panel%20is%20the%20open%20source%20unofficial%20DuckDuckGo%20Email%20Protection%20panel.&demo-url=https%3A%2F%2Fddgep.whatk.me)
 
 ## ⚓ Docker Deployment
+
+Build from this repo (the prebuilt `whatk233/ddg-email-panel` image is the older upstream version):
+
 ```shell
-docker run -d --restart=always -p 3000:3000 --name ddg-email-panel whatk233/ddg-email-panel
+git clone https://github.com/JohnsonRan/ddg-email-panel.git
+cd ddg-email-panel
+docker compose up -d --build
 ```
+
+> **Note**  
+> DuckDuckGo blocks requests from many cloud/datacenter IPs (e.g. Vercel / AWS) with an empty `403 Forbidden`.
+> If generating an alias fails with `403 - Forbidden`, host the panel on a machine with a clean (e.g. residential) IP.
 
 ## 🔧 Local Deployment
 
