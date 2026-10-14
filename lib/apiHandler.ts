@@ -41,5 +41,21 @@ const handler = {
   },
 };
 
+/**
+ * Relay a failed upstream (DuckDuckGo) response with its real status.
+ * DDG error bodies are often empty/plain text, so never assume JSON.
+ */
+export async function sendUpstreamError(result: Response, res: NextApiResponse) {
+  const text = (await result.text().catch(() => "")).trim();
+  let message = result.statusText || `HTTP ${result.status}`;
+  try {
+    const body = JSON.parse(text);
+    message = body?.message || body?.error || message;
+  } catch {
+    if (text) message = text.slice(0, 200);
+  }
+  res.status(result.status).json({ message });
+}
+
 export default router;
 export { handler };
