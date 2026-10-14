@@ -11,13 +11,13 @@ import Spinner from '../components/ui/Spinner'
 import { USERNAME_REGEX } from '../lib/constants'
 import {
   errorMessage,
-  fetchDashboard,
   generateAddress,
   loginWithPassphrase,
   requestLoginLink,
 } from '../utils/api'
 import { useAccountStore } from '../utils/account'
 import * as store from '../utils/store'
+import type { DashboardResponse } from '../types'
 
 type Step = 'username' | 'code'
 type Method = 'passphrase' | 'token'
@@ -67,22 +67,27 @@ const LoginPage: NextPage = () => {
   }
 
   /** Exchange a token (from the passphrase flow or a pasted access token) for an account. */
-  const completeLogin = async (token: string) => {
-    const dashboard = await fetchDashboard(token)
-    const user = dashboard.user ?? {}
+  const completeLogin = async (token: string, dashboard?: DashboardResponse, sessionToken?: string) => {
+    // `/email/dashboard` rejects the access token (401), so a pasted access token is
+    // validated by generating an alias instead.
+    const user = dashboard?.user ?? {}
     const name = user.username || username.trim()
     const existing = store.getAccounts().find((item) => item.username === name)
 
     const index = store.addAccount({
       access_token: token,
-      cohort: user.cohort ?? '',
+      session_token: sessionToken ?? existing?.session_token,
+      cohort: user.cohort ?? existing?.cohort ?? '',
       username: name,
-      email: user.email ?? '',
-      addressesGenerated: dashboard.stats?.addresses_generated ?? 0,
+      email: user.email ?? existing?.email ?? '',
+      addressesGenerated: dashboard?.stats?.addresses_generated ?? existing?.addressesGenerated ?? 0,
       nextAlias: existing?.nextAlias ?? '',
     })
 
-    if (!existing?.nextAlias) {
+    if (!dashboard) {
+      const generated = await generateAddress(token)
+      store.addAddress(index, generated.address, 'generate')
+    } else if (!existing?.nextAlias) {
       try {
         const generated = await generateAddress(token)
         store.addAddress(index, generated.address, 'generate')
@@ -114,7 +119,7 @@ const LoginPage: NextPage = () => {
         const result = await loginWithPassphrase(username.trim(), code)
         const token = result.user?.access_token
         if (!token) throw new Error(t('Login failed'))
-        await completeLogin(token)
+        await completeLogin(token, result, result.token)
       }
     } catch (error) {
       if (method === 'token') {

@@ -37,6 +37,8 @@ export interface DashboardResponse {
 
 export interface Account {
   access_token?: string
+  /** Session token from the passphrase login; the only token `/email/dashboard` accepts. */
+  session_token?: string
   cohort?: string
   remark?: string
   username?: string

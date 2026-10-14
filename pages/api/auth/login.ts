@@ -13,16 +13,17 @@ async function login(req: NextApiRequest, res: NextApiResponse) {
   }
   await ddgLogin(username, otp)
     .then(async (result) => {
-      const data = (await result.json()) as {
+      const loginData = (await result.json()) as {
         status: string
         token: string
         user: string
       }
       if (result.ok) {
-        await getAccessToken(data.token).then(async (result) => {
+        await getAccessToken(loginData.token).then(async (result) => {
           const data = await result.json()
           if (result.ok) {
-            res.status(200).json(data)
+            // `token` is the session token; only it (not access_token) is accepted by /email/dashboard.
+            res.status(200).json({ ...data, token: loginData.token })
           } else {
             res.status(result.status).json({ message: result.statusText })
           }

@@ -38,9 +38,12 @@ export const requestLoginLink = (username: string) =>
   })
 
 export const loginWithPassphrase = (username: string, otp: string) =>
-  api<{
-    user: { access_token: string; cohort: string; email: string; username: string }
-  }>('/api/auth/login', { method: 'POST', body: JSON.stringify({ username, otp }) })
+  api<
+    DashboardResponse & {
+      token: string
+      user: { access_token: string; cohort: string; email: string; username: string }
+    }
+  >('/api/auth/login', { method: 'POST', body: JSON.stringify({ username, otp }) })
 
 export const generateAddress = (token: string) =>
   api<{ address: string }>('/api/generateaddresses', {

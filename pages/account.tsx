@@ -66,13 +66,14 @@ const AccountPage: NextPage = () => {
   const sendCount = account.reverseAliases?.length ?? 0
 
   const refresh = async () => {
-    if (!account.access_token) {
+    // Dashboard only accepts the passphrase-login session token, not the access token.
+    if (!account.session_token) {
       toast.error(t('Unauthorized'))
       return
     }
     setRefreshing(true)
     try {
-      const dashboard = await fetchDashboard(account.access_token)
+      const dashboard = await fetchDashboard(account.session_token)
       store.editAccount(activeIndex, {
         email: dashboard.user?.email ?? account.email,
         cohort: dashboard.user?.cohort ?? account.cohort,
