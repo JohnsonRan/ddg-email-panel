@@ -55,6 +55,18 @@ export const generateAddress = (token: string) =>
 export const fetchDashboard = (token: string) =>
   api<DashboardResponse>('/api/dashboard', { headers: { Authorization: `Bearer ${token}` } })
 
+export const fetchAddressStatus = (token: string, address: string) =>
+  api<{ active: boolean }>(`/api/addressstatus?address=${encodeURIComponent(address)}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+
+export const updateAddressStatus = (token: string, address: string, active: boolean) =>
+  api<{ active: boolean }>('/api/addressstatus', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ address, active }),
+  })
+
 /** Human readable message for any thrown value. */
 export function errorMessage(error: unknown): string {
   if (error instanceof ApiError) {

@@ -35,3 +35,24 @@ export async function generateAddresses(token: string) {
     headers: { ...baseHeaders, Authorization: `Bearer ${token}` },
   })
 }
+
+/**
+ * Forwarding status of one private address (`{ active: boolean }`).
+ * Same endpoint the DuckDuckGo browsers use; DDG has no list or delete API.
+ */
+export async function getAddressStatus(token: string, address: string) {
+  return fetch(`${endpoint}/email/addresses?address=${encodeURIComponent(address)}`, {
+    headers: { ...baseHeaders, Authorization: `Bearer ${token}` },
+  })
+}
+
+/** Deactivate (`active=false`) or reactivate a private address. */
+export async function setAddressStatus(token: string, address: string, active: boolean) {
+  return fetch(
+    `${endpoint}/email/addresses?address=${encodeURIComponent(address)}&active=${active}`,
+    {
+      method: 'PUT',
+      headers: { ...baseHeaders, Authorization: `Bearer ${token}` },
+    }
+  )
+}
