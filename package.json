@@ -24,6 +24,7 @@
     "typecheck": "tsc --noEmit",
     "format": "prettier --write ."
   },
+  "packageManager": "pnpm@11.21.0",
   "dependencies": {
     "@hapi/boom": "^10.0.1",
     "@headlessui/react": "^2.2.10",
