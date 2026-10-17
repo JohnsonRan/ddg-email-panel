@@ -244,7 +244,7 @@ const AccountPage: NextPage = () => {
             void router.replace('/login')
             return
           }
-          const next = index === activeIndex ? 0 : activeIndex
+          const next = index === activeIndex ? 0 : index < activeIndex ? activeIndex - 1 : activeIndex
           void router.replace({ pathname: '/account', query: { id: next } })
         }}
       />

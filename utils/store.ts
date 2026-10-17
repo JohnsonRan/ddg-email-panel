@@ -66,7 +66,12 @@ export function removeAccount(index: number): Account | null {
   if (!accounts[index]) return null
   const [removed] = accounts.splice(index, 1)
   setAccounts(accounts)
-  if (getLastUserId() === index) setLastUserId(0)
+  const last = getLastUserId()
+  if (last === index) {
+    setLastUserId(0)
+  } else if (last > index) {
+    setLastUserId(last - 1)
+  }
   return removed
 }
 
