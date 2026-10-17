@@ -5,7 +5,7 @@ const LAST_USER_KEY = 'lastuser'
 
 const canUseStorage = () => typeof window !== 'undefined' && !!window.localStorage
 
-/** Accounts are stored client-side only; the server never sees them. */
+/** Accounts are stored client-side only; the server transits tokens as Bearer headers but never persists them. */
 export function getAccounts(): Account[] {
   if (!canUseStorage()) return []
   try {
