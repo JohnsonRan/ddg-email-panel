@@ -9,6 +9,9 @@ export interface StoredAddress {
   notes?: string
   tags?: string[]
   source?: AddressSource
+  /** Last known DuckDuckGo forwarding status; undefined = never checked. */
+  active?: boolean
+  statusCheckedAt?: number
 }
 
 /**

@@ -8,14 +8,21 @@ import { serverSideTranslations } from 'next-i18next/pages/serverSideTranslation
 import {
   ArchiveBoxIcon,
   ArrowDownTrayIcon,
+  ArrowPathIcon,
   ArrowUpTrayIcon,
   MagnifyingGlassIcon,
+  NoSymbolIcon,
+  PlayCircleIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline'
 import Layout from '../components/Layout/Layout'
 import RecordList, { type RecordItem } from '../components/RecordList'
+import ConfirmDialog from '../components/ui/ConfirmDialog'
 import PageLoading from '../components/ui/PageLoading'
+import Spinner from '../components/ui/Spinner'
+import type { StoredAddress } from '../types'
 import { hydratedAtom, useAccountStore } from '../utils/account'
+import { ApiError, errorMessage, fetchAddressStatus, updateAddressStatus } from '../utils/api'
 import { fullAddress } from '../utils/sendAddress'
 import * as store from '../utils/store'
 import { applyImport, buildExport, downloadJson, parseImport } from '../utils/vault'
@@ -28,6 +35,135 @@ const VaultPage: NextPage = () => {
   const [query, setQuery] = useState('')
   const [activeTag, setActiveTag] = useState<string | null>(null)
   const hydrated = useAtomValue(hydratedAtom)
+  const [busy, setBusy] = useState<Set<string>>(new Set())
+  const [checkingAll, setCheckingAll] = useState(false)
+  const [pendingDeactivate, setPendingDeactivate] = useState<string | null>(null)
+  const token = account?.access_token
+
+  const setBusyFor = (value: string, on: boolean) =>
+    setBusy((prev) => {
+      const next = new Set(prev)
+      if (on) next.add(value)
+      else next.delete(value)
+      return next
+    })
+
+  const saveStatus = (value: string, active: boolean) => {
+    store.setAddressActive(activeIndex, value, active)
+    sync()
+  }
+
+  /** Query DDG for one address. Returns false on failure (already toasted). */
+  const checkStatus = async (value: string, quiet = false): Promise<boolean> => {
+    if (!token) {
+      toast.error(t('Unauthorized'))
+      return false
+    }
+    setBusyFor(value, true)
+    try {
+      const { active } = await fetchAddressStatus(token, value)
+      saveStatus(value, active)
+      return true
+    } catch (error) {
+      if (!quiet) toast.error(`${t('Status check failed')} (${errorMessage(error)})`)
+      if (error instanceof ApiError && error.status === 401) throw error
+      return false
+    } finally {
+      setBusyFor(value, false)
+    }
+  }
+
+  const checkAll = async (values: string[]) => {
+    setCheckingAll(true)
+    let failed = 0
+    try {
+      // Sequential on purpose: stay gentle with DuckDuckGo's rate limits.
+      for (const value of values) {
+        if (!(await checkStatus(value, true))) failed++
+      }
+      if (failed === 0) toast.success(t('Status updated'))
+      else toast.error(t('{{value}} status checks failed', { value: failed }))
+    } catch (error) {
+      toast.error(`${t('Status check failed')} (${errorMessage(error)})`)
+    } finally {
+      setCheckingAll(false)
+    }
+  }
+
+  const setActive = async (value: string, active: boolean) => {
+    if (!token) {
+      toast.error(t('Unauthorized'))
+      return
+    }
+    setBusyFor(value, true)
+    try {
+      const result = await updateAddressStatus(token, value, active)
+      saveStatus(value, result.active)
+      toast.success(result.active ? t('Address reactivated') : t('Address deactivated'))
+    } catch (error) {
+      toast.error(`${t('Status update failed')} (${errorMessage(error)})`)
+    } finally {
+      setBusyFor(value, false)
+    }
+  }
+
+  const statusBadge = (address: StoredAddress) => {
+    const pending = busy.has(address.value)
+    const className =
+      address.active === true
+        ? 'badge bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
+        : address.active === false
+          ? 'badge bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300'
+          : 'badge badge-neutral'
+    const label =
+      address.active === true
+        ? t('Active')
+        : address.active === false
+          ? t('Deactivated')
+          : t('Check status')
+    return (
+      <button
+        type="button"
+        className={`${className} cursor-pointer`}
+        disabled={pending}
+        onClick={() => void checkStatus(address.value).catch(() => undefined)}
+        title={t('Check status')}
+      >
+        {pending && <Spinner className="h-3 w-3" />}
+        {label}
+      </button>
+    )
+  }
+
+  const statusAction = (address: StoredAddress) => {
+    const pending = busy.has(address.value)
+    if (address.active === false) {
+      return (
+        <button
+          type="button"
+          className="icon-btn opacity-60 hover:text-emerald-600 group-hover:opacity-100 dark:hover:text-emerald-400"
+          disabled={pending}
+          onClick={() => void setActive(address.value, true)}
+          title={t('Reactivate')}
+          aria-label={`${t('Reactivate')} ${fullAddress(address.value)}`}
+        >
+          <PlayCircleIcon className="h-4 w-4" />
+        </button>
+      )
+    }
+    return (
+      <button
+        type="button"
+        className="icon-btn opacity-60 hover:text-amber-600 group-hover:opacity-100 dark:hover:text-amber-400"
+        disabled={pending}
+        onClick={() => setPendingDeactivate(address.value)}
+        title={t('Deactivate')}
+        aria-label={`${t('Deactivate')} ${fullAddress(address.value)}`}
+      >
+        <NoSymbolIcon className="h-4 w-4" />
+      </button>
+    )
+  }
 
   const addresses = useMemo(() => account?.addresses ?? [], [account?.addresses])
 
@@ -55,6 +191,8 @@ const VaultPage: NextPage = () => {
     notes: address.notes ?? '',
     tags: address.tags,
     createdAt: address.createdAt,
+    badge: statusBadge(address),
+    actions: statusAction(address),
   }))
 
   const handleImport = async (file: File) => {
@@ -89,7 +227,17 @@ const VaultPage: NextPage = () => {
             </h2>
             <p className="text-sm muted">{t('Alias vault hint')}</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              disabled={checkingAll || filtered.length === 0}
+              onClick={() => void checkAll(filtered.map((address) => address.value))}
+              title={t('Check status hint')}
+            >
+              {checkingAll ? <Spinner className="h-4 w-4" /> : <ArrowPathIcon className="h-4 w-4" />}
+              {t('Check status')}
+            </button>
             <button
               type="button"
               className="btn btn-secondary btn-sm"
@@ -208,6 +356,20 @@ const VaultPage: NextPage = () => {
           onDelete={(key) => {
             store.removeAddress(activeIndex, key)
             sync()
+          }}
+          deleteTitle={t('Remove from vault')}
+          deleteHint={t('Remove from vault hint')}
+        />
+
+        <ConfirmDialog
+          open={!!pendingDeactivate}
+          title={t('Deactivate address')}
+          message={`${pendingDeactivate ? fullAddress(pendingDeactivate) : ''}\n\n${t('Deactivate hint')}`}
+          confirmLabel={t('Deactivate')}
+          onCancel={() => setPendingDeactivate(null)}
+          onConfirm={() => {
+            if (pendingDeactivate) void setActive(pendingDeactivate, false)
+            setPendingDeactivate(null)
           }}
         />
 

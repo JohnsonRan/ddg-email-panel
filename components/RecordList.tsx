@@ -14,6 +14,10 @@ export interface RecordItem {
   notes?: string
   tags?: string[]
   createdAt?: number
+  /** Extra inline content after the title (e.g. a status badge). */
+  badge?: React.ReactNode
+  /** Extra row buttons rendered before the delete button. */
+  actions?: React.ReactNode
 }
 
 export default function RecordList({
@@ -24,6 +28,8 @@ export default function RecordList({
   onUpdateNotes,
   onUpdateTags,
   onDelete,
+  deleteTitle,
+  deleteHint,
   activeTag = null,
   onTagClick,
   allTags = [],
@@ -37,6 +43,10 @@ export default function RecordList({
   onUpdateNotes?: (key: string, notes: string) => void
   onUpdateTags?: (key: string, tags: string[]) => void
   onDelete?: (key: string) => void
+  /** Delete button label and confirm title; defaults to "Delete" / "Delete address". */
+  deleteTitle?: string
+  /** Confirm dialog body; defaults to "This action cannot be undone". */
+  deleteHint?: string
   activeTag?: string | null
   onTagClick?: (tag: string | null) => void
   allTags?: string[]
@@ -64,15 +74,16 @@ export default function RecordList({
             onUpdateNotes={onUpdateNotes}
             onUpdateTags={onUpdateTags}
             onDelete={onDelete ? () => setPendingDelete(item) : undefined}
+            deleteLabel={deleteTitle ?? t('Delete')}
           />
         ))}
       </ul>
 
       <ConfirmDialog
         open={!!pendingDelete}
-        title={t('Delete address')}
-        message={`${pendingDelete?.title}\n\n${t('This action cannot be undone')}`}
-        confirmLabel={t('Delete')}
+        title={deleteTitle ?? t('Delete address')}
+        message={`${pendingDelete?.title}\n\n${deleteHint ?? t('This action cannot be undone')}`}
+        confirmLabel={deleteTitle ?? t('Delete')}
         onCancel={() => setPendingDelete(null)}
         onConfirm={() => {
           if (pendingDelete) onDelete?.(pendingDelete.key)
@@ -92,6 +103,7 @@ function RecordRow({
   onUpdateNotes,
   onUpdateTags,
   onDelete,
+  deleteLabel,
 }: {
   item: RecordItem
   locale?: string
@@ -101,6 +113,7 @@ function RecordRow({
   onUpdateNotes?: (key: string, notes: string) => void
   onUpdateTags?: (key: string, tags: string[]) => void
   onDelete?: () => void
+  deleteLabel: string
 }) {
   const { t } = useTranslation('common')
   const [tagDraft, setTagDraft] = useState('')
@@ -118,6 +131,7 @@ function RecordRow({
         <div className="flex flex-wrap items-center gap-2">
           <span className="addr font-medium text-slate-800 dark:text-slate-100">{item.title}</span>
           <CopyButton text={item.title} iconOnly className="btn btn-ghost btn-sm opacity-70" />
+          {item.badge}
           {item.createdAt && (
             <span className="text-xs whitespace-nowrap muted">
               {formatDateTime(item.createdAt, locale)}
@@ -218,16 +232,21 @@ function RecordRow({
         )}
       </div>
 
-      {onDelete && (
-        <button
-          type="button"
-          className="icon-btn shrink-0 opacity-60 hover:text-rose-600 group-hover:opacity-100 dark:hover:text-rose-400"
-          onClick={onDelete}
-          title={t('Delete')}
-          aria-label={`${t('Delete')} ${item.title}`}
-        >
-          <TrashIcon className="h-4 w-4" />
-        </button>
+      {(item.actions || onDelete) && (
+        <div className="flex shrink-0 items-center gap-1">
+          {item.actions}
+          {onDelete && (
+            <button
+              type="button"
+              className="icon-btn opacity-60 hover:text-rose-600 group-hover:opacity-100 dark:hover:text-rose-400"
+              onClick={onDelete}
+              title={deleteLabel}
+              aria-label={`${deleteLabel} ${item.title}`}
+            >
+              <TrashIcon className="h-4 w-4" />
+            </button>
+          )}
+        </div>
       )}
     </li>
   )

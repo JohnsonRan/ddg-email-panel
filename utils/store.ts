@@ -111,6 +111,11 @@ export function editAddress(index: number, value: string, patch: Partial<StoredA
   editAccount(index, { addresses })
 }
 
+/** Record the DuckDuckGo forwarding status of an address. */
+export function setAddressActive(index: number, value: string, active: boolean) {
+  editAddress(index, value, { active, statusCheckedAt: Date.now() })
+}
+
 export function removeAddress(index: number, value: string) {
   const account = getAccount(index)
   if (!account?.addresses) return
