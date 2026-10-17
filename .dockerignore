@@ -7,7 +7,7 @@ coverage
 .qa
 .pi
 *.tsbuildinfo
-.env*.local
+.env*
 npm-debug.log*
 .pnpm-debug.log*
 Dockerfile
