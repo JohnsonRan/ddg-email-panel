@@ -43,9 +43,18 @@
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fwhatk233%2Fddg-email-panel&demo-title=DDG%20Email%20Panel&demo-description=DDG%20Email%20Panel%20is%20the%20open%20source%20unofficial%20DuckDuckGo%20Email%20Protection%20panel.&demo-url=https%3A%2F%2Fduckduckgo.email)
 
 ## ⚓ Docker 部署
+
+从本仓库构建（预构建镜像 `whatk233/ddg-email-panel` 是较早的上游版本）：
+
 ```shell
-docker run -d --restart=always -p 3000:3000 --name ddg-email-panel whatk233/ddg-email-panel
+git clone https://github.com/JohnsonRan/ddg-email-panel.git
+cd ddg-email-panel
+docker compose up -d --build
 ```
+
+> **注意**  
+> DuckDuckGo 会封锁许多云厂商/数据中心 IP（如 Vercel / AWS）的请求，并返回空的 `403 Forbidden`。
+> 若生成别名失败并提示 `403 - Forbidden`，请将面板部署在拥有干净 IP（如家宽 IP）的机器上。
 
 ## 🔧 本地部署
 
