@@ -69,7 +69,13 @@ const LoginPage: NextPage = () => {
   /** Exchange a token (from the passphrase flow or a pasted access token) for an account. */
   const completeLogin = async (token: string, dashboard?: DashboardResponse, sessionToken?: string) => {
     // `/email/dashboard` rejects the access token (401), so a pasted access token is
-    // validated by generating an alias instead.
+    // validated by generating an alias first BEFORE persisting anything.
+    let initialAlias: string | null = null
+    if (!dashboard) {
+      const generated = await generateAddress(token)
+      initialAlias = generated.address
+    }
+
     const user = dashboard?.user ?? {}
     const name = user.username || username.trim()
     const existing = store.getAccounts().find((item) => item.username === name)
@@ -84,9 +90,8 @@ const LoginPage: NextPage = () => {
       nextAlias: existing?.nextAlias ?? '',
     })
 
-    if (!dashboard) {
-      const generated = await generateAddress(token)
-      store.addAddress(index, generated.address, 'generate')
+    if (initialAlias) {
+      store.addAddress(index, initialAlias, 'generate')
     } else if (!existing?.nextAlias) {
       try {
         const generated = await generateAddress(token)
